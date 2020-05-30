@@ -70,6 +70,8 @@ class BBlock:
         self.insns = insns
         self.preds = []
         self.succs = []
+        # Potentially can be merged with some other field e.g. dfs_post.
+        self.seen = False
 
     def __repr__(self):
         return "<BBlock %s>" % self.label
