@@ -87,6 +87,11 @@ class Func:
         self.param_types = ()
         self.bblocks = []
 
+    def calc_preds(self):
+        for bb in self.bblocks:
+            for s in bb.succs:
+                s.preds.append(bb)
+
     def __repr__(self):
         return "<Func %s %d bb>" % (self.name, len(self.bblocks))
 
