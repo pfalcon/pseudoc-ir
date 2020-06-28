@@ -10,10 +10,10 @@ def render_insn(insn, bb, cfg, use_regs):
 
     def str_arg(arg):
         if arg.defi is not None:
-            val = arg.defi.dest_name()
             if use_regs:
-                reg = "/*%s*/" % arg.defi.reg if arg.defi.reg else ""
-                val += reg
+                val = arg.defi.reg
+            else:
+                val = arg.defi.dest_name()
         else:
             if arg.val == "@undef":
                 return "UNDEF"
@@ -51,6 +51,14 @@ def render_insn(insn, bb, cfg, use_regs):
         elif insn.op == "@store":
             rhs = "*(%s*)%s = %s" % (insn.args[1], str_arg(insn.args[0]), str_arg(insn.args[2]))
         elif insn.op == "@phi":
+            if use_regs:
+                reg = insn.reg
+                for a in insn.args:
+                    if reg != a.defi.reg:
+                        break
+                else:
+                    return None
+
             preds = ["&&%s" % p.label for p in bb.preds]
             vals = [str_arg(a) for a in insn.args]
             args = []
@@ -76,25 +84,29 @@ def render_insn(insn, bb, cfg, use_regs):
         if not insn.dest:
             res = "%s" % rhs
         else:
-            reg = ""
-            if insn.reg and use_regs:
-                reg = "/*%s*/ " % insn.reg
-            res = "%s%s = %s" % (reg, insn.dest_name(cfg.is_ssa), rhs)
+            if use_regs:
+                dest = insn.reg
+            else:
+                dest = insn.dest_name(cfg.is_ssa)
+            res = "%s = %s" % (dest, rhs)
         return prefix + res
 
     return render(insn)
 
 
-def get_local_vars(cfg):
+def get_local_vars(cfg, use_regs):
     vars = set()
     for bb in cfg.bblocks:
         for insn in bb.insns:
             if insn.dest:
-                if cfg.is_ssa:
-                    vars.add(insn.dest_name())
+                if use_regs:
+                    vars.add(insn.reg)
                 else:
-                    if insn.dest not in cfg.params:
-                        vars.add(insn.dest)
+                    if cfg.is_ssa:
+                        vars.add(insn.dest_name())
+                    else:
+                        if insn.dest not in cfg.params:
+                            vars.add(insn.dest)
     return sorted(vars)
 
 
@@ -118,7 +130,7 @@ def render_cfg(func, use_regs=False, file=None):
     if func.is_ssa:
         print("    SSA_HEADER();", file=file)
 
-    local_vars = get_local_vars(func)
+    local_vars = get_local_vars(func, use_regs)
     if local_vars:
         print("    long %s;" % ", ".join(local_vars), file=file)
 
@@ -127,7 +139,10 @@ def render_cfg(func, use_regs=False, file=None):
         label = "L(%s):" % bb.label if func.is_ssa else "%s:" % bb.label
         print(label, file=file)
         for insn in bb.insns:
-            print("    " + render_insn(insn, bb, func, use_regs) + ";", file=file)
+            insn_str = render_insn(insn, bb, func, use_regs)
+            if insn_str is None:
+                continue
+            print("    " + insn_str + ";", file=file)
         if len(bb.succs) == 1 and bb.succs[0] is not next_bb:
             print("    goto %s;" % bb.succs[0].label, file=file)
     print("}", file=file)
