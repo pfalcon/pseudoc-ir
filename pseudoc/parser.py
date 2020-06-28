@@ -25,15 +25,17 @@
 import re
 
 from lexer import Lexer
-from .ir import Insn, BBlock, Func, Data, Module
+from .ir import Insn, BBlock, Func, Data, Module, PrimType, PtrType
 
 
 LEX_IDENT = re.compile(r"[@$]?[A-Za-z_][A-Za-z_0-9]*")
 LEX_NUM = re.compile(r"-?\d+")
+LEX_TYPE = re.compile(r"void|i1|i8|u8|i16|u16|i32|u32|i64|u64")
 # Simplified. To avoid enumerating specific operators supported, just say
 # "anything non-space, except handle opening parens specially (for calls
 # w/o args).
 LEX_OP = re.compile(r"\(|[^ ]+")
+LEX_UNARY_OP = re.compile(r"[-~!*]")
 
 
 LABEL_CNT = 0
@@ -41,6 +43,22 @@ LABEL_CNT = 0
 
 def parse_var(lex):
     return lex.expect_re(LEX_IDENT, err="expected identifier")
+
+
+def parse_type_name(lex):
+    return lex.expect_re(LEX_TYPE)
+
+
+def parse_type_mod(lex, typ):
+    while lex.match("*"):
+        typ = PtrType(typ)
+    return typ
+
+
+def parse_type(lex):
+    typ = parse_type_name(lex)
+    typ = PrimType(typ)
+    return parse_type_mod(lex, typ)
 
 
 def parse_val(lex):
@@ -192,19 +210,37 @@ def parse(f):
                 if not dest.startswith("$"):
                     lex.error("Can assign only to local variables (must start with '$')", ctx=lex_ctx)
 
-                arg1 = parse_val(lex)
-                if lex.eol():
-                    insn = Insn(dest, "=", arg1)
-                else:
-                    op = lex.expect_re(LEX_OP)
-                    if op == "(":
-                        # Function call
-                        args = parse_args(lex)
-                        insn = make_call(dest, arg1, *args)
-                        start_new_bb = True
+                unary_op = lex.match_re(LEX_UNARY_OP)
+                if unary_op:
+                    # Unary op
+                    typ = None
+                    if unary_op == "*":
+                        if lex.match("("):
+                            typ = parse_type(lex)
+                            assert isinstance(typ, PtrType)
+                            typ = typ.el_type
+                            lex.expect(")")
+                    arg1 = parse_val(lex)
+                    if unary_op == "*":
+                        insn = Insn(dest, "@load", arg1, typ)
                     else:
-                        arg2 = parse_val(lex)
-                        insn = Insn(dest, op, arg1, arg2)
+                        insn = Insn(dest, op, arg1)
+                else:
+                    arg1 = parse_val(lex)
+                    if lex.eol():
+                        # Move
+                        insn = Insn(dest, "=", arg1)
+                    else:
+                        # Binary op
+                        op = lex.expect_re(LEX_OP)
+                        if op == "(":
+                            # Function call
+                            args = parse_args(lex)
+                            insn = make_call(dest, arg1, *args)
+                            start_new_bb = True
+                        else:
+                            arg2 = parse_val(lex)
+                            insn = Insn(dest, op, arg1, arg2)
             elif lex.match("("):
                 # Function call
                 args = parse_args(lex)
