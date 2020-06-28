@@ -204,10 +204,17 @@ def parse(f):
             prev_bb = None
 
         else:
+            ptr_typ = None
+            if lex.match("*"):
+                lex.expect("(")
+                ptr_typ = parse_type(lex)
+                assert isinstance(ptr_typ, PtrType)
+                ptr_typ = ptr_typ.el_type
+                lex.expect(")")
             dest = parse_var(lex)
 
             if lex.match("="):
-                if not dest.startswith("$"):
+                if ptr_typ is None and not dest.startswith("$"):
                     lex.error("Can assign only to local variables (must start with '$')", ctx=lex_ctx)
 
                 unary_op = lex.match_re(LEX_UNARY_OP)
@@ -228,8 +235,12 @@ def parse(f):
                 else:
                     arg1 = parse_val(lex)
                     if lex.eol():
-                        # Move
-                        insn = Insn(dest, "=", arg1)
+                        if ptr_typ is None:
+                            # Move
+                            insn = Insn(dest, "=", arg1)
+                        else:
+                            # Store
+                            insn = Insn("", "@store", dest, ptr_typ, arg1)
                     else:
                         # Binary op
                         op = lex.expect_re(LEX_OP)
