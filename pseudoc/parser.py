@@ -201,6 +201,7 @@ def parse(f):
                         # Function call
                         args = parse_args(lex)
                         insn = make_call(dest, arg1, *args)
+                        start_new_bb = True
                     else:
                         arg2 = parse_val(lex)
                         insn = Insn(dest, op, arg1, arg2)
@@ -208,6 +209,7 @@ def parse(f):
                 # Function call
                 args = parse_args(lex)
                 insn = make_call("", dest, *args)
+                start_new_bb = True
             else:
                 lex.error("Unexpected syntax")
 
