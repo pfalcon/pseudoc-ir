@@ -82,6 +82,14 @@ def get_label():
     return "_l%d" % c
 
 
+def make_call(dest, name, *args):
+    if name.startswith("@"):
+        # Special name
+        return Insn(dest, name, *args)
+    else:
+        return Insn(dest, "call", name, *args)
+
+
 def parse(f):
     mod = Module()
     bb = None
@@ -192,14 +200,14 @@ def parse(f):
                     if op == "(":
                         # Function call
                         args = parse_args(lex)
-                        insn = Insn(dest, "call", arg1, *args)
+                        insn = make_call(dest, arg1, *args)
                     else:
                         arg2 = parse_val(lex)
                         insn = Insn(dest, op, arg1, arg2)
             elif lex.match("("):
                 # Function call
                 args = parse_args(lex)
-                insn = Insn("", "call", dest, *args)
+                insn = make_call("", dest, *args)
             else:
                 lex.error("Unexpected syntax")
 
