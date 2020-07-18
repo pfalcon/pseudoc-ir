@@ -31,8 +31,9 @@ from .ir import Insn, BBlock, Func, Data, Module
 LEX_IDENT = re.compile(r"[@$]?[A-Za-z_][A-Za-z_0-9]*")
 LEX_NUM = re.compile(r"-?\d+")
 # Simplified. To avoid enumerating specific operators supported, just say
-# "anything non-space".
-LEX_OP = re.compile(r"[^ ]+")
+# "anything non-space, except handle opening parens specially (for calls
+# w/o args).
+LEX_OP = re.compile(r"\(|[^ ]+")
 
 
 LABEL_CNT = 0
@@ -189,15 +190,16 @@ def parse(f):
                 else:
                     op = lex.expect_re(LEX_OP)
                     if op == "(":
+                        # Function call
                         args = parse_args(lex)
-                        insn = Insn(dest, arg1, *args)
+                        insn = Insn(dest, "call", arg1, *args)
                     else:
                         arg2 = parse_val(lex)
                         insn = Insn(dest, op, arg1, arg2)
             elif lex.match("("):
                 # Function call
                 args = parse_args(lex)
-                insn = Insn("", dest, *args)
+                insn = Insn("", "call", dest, *args)
             else:
                 lex.error("Unexpected syntax")
 
