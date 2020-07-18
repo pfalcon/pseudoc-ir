@@ -139,6 +139,13 @@ def parse(f):
             lex.expect("goto")
             label = lex.expect_re(LEX_IDENT)
             bb.succs.append(get_bb(label))
+            if not lex.eol():
+                lex.expect("else")
+                # Currently "goto" after "else" is optional.
+                lex.match("goto")
+                label = lex.expect_re(LEX_IDENT)
+                bb.succs.append(get_bb(label))
+                prev_bb = None
             insn = Insn("", "if", *expr)
 
         elif lex.match("return"):
