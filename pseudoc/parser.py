@@ -35,6 +35,9 @@ LEX_NUM = re.compile(r"-?\d+")
 LEX_OP = re.compile(r"[^ ]+")
 
 
+LABEL_CNT = 0
+
+
 def parse_var(lex):
     return lex.expect_re(LEX_IDENT, err="expected identifier")
 
@@ -71,12 +74,20 @@ def parse_if_expr(lex):
     return res
 
 
+def get_label():
+    global LABEL_CNT
+    c = LABEL_CNT
+    LABEL_CNT += 1
+    return "_l%d" % c
+
+
 def parse(f):
     mod = Module()
     bb = None
     prev_bb = None
     label2bb = {}
     lex = Lexer()
+    start_new_bb = True
     cfg = None
 
     def get_bb(label):
@@ -99,6 +110,7 @@ def parse(f):
                 cfg.params = parse_args(lex)
                 lex.expect("{")
                 label2bb = {}
+                start_new_bb = True
                 bb = None
                 prev_bb = None
             elif lex.match("="):
@@ -113,8 +125,12 @@ def parse(f):
             cfg = None
             continue
 
-        if l.endswith(":"):
-            label = l[:-1]
+        is_label = l.endswith(":")
+        if is_label or start_new_bb:
+            if is_label:
+                label = l[:-1]
+            else:
+                label = get_label()
             if True:
                 bb = get_bb(label)
                 cfg.bblocks.append(bb)
@@ -122,7 +138,9 @@ def parse(f):
                     # Fallthru edge
                     prev_bb.succs.append(bb)
                 prev_bb = bb
-            continue
+            start_new_bb = False
+            if is_label:
+                continue
 
         insn = None
 
