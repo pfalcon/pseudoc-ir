@@ -151,6 +151,7 @@ def parse(f):
             label = lex.expect_re(LEX_IDENT)
             bb.succs.append(get_bb(label))
             prev_bb = None
+            start_new_bb = True
 
         elif lex.match("if"):
             expr = parse_if_expr(lex)
@@ -165,6 +166,7 @@ def parse(f):
                 bb.succs.append(get_bb(label))
                 prev_bb = None
             insn = Insn("", "if", *expr)
+            start_new_bb = True
 
         elif lex.match("return"):
             if not lex.eol():
