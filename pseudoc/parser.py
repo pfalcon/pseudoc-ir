@@ -126,6 +126,9 @@ def parse(f):
 
         insn = None
 
+        # Context before having parsed anything, for error messages.
+        lex_ctx = lex.l
+
         if lex.match("goto"):
             label = lex.expect_re(LEX_IDENT)
             bb.succs.append(get_bb(label))
@@ -148,7 +151,11 @@ def parse(f):
 
         else:
             dest = parse_var(lex)
+
             if lex.match("="):
+                if not dest.startswith("$"):
+                    lex.error("Can assign only to local variables (must start with '$')", ctx=lex_ctx)
+
                 arg1 = parse_val(lex)
                 if lex.eol():
                     insn = Insn(dest, "=", arg1)
