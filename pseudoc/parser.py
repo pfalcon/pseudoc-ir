@@ -203,6 +203,9 @@ def parse(f):
                 insn = Insn("", "return")
             prev_bb = None
 
+        elif lex.match("@nop"):
+            insn = Insn("", "@nop")
+
         else:
             ptr_typ = None
             if lex.match("*"):
