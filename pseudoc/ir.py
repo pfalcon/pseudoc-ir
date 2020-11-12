@@ -65,3 +65,14 @@ class Func:
         self.params = ()
         self.param_types = ()
         self.bblocks = []
+
+
+class Data:
+
+    def __init__(self, name, desc, type=None):
+        self.name = name
+        self.desc = desc
+        self.type = type
+
+    def __repr__(self):
+        return "<Data %s>" % self.name
