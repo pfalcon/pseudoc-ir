@@ -76,3 +76,12 @@ class Data:
 
     def __repr__(self):
         return "<Data %s>" % self.name
+
+
+class Module:
+
+    def __init__(self):
+        self.contents = []
+
+    def add(self, item):
+        self.contents.append(item)
