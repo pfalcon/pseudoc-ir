@@ -25,7 +25,7 @@
 import re
 
 from lexer import Lexer
-from .ir import Insn, BBlock, Func, Data, Module, PrimType, PtrType
+from .ir import Arg, Insn, BBlock, Func, Data, Module, PrimType, PtrType
 
 
 LEX_IDENT = re.compile(r"[$][A-Za-z_0-9]+|[@]?[A-Za-z_][A-Za-z_0-9]*")
@@ -41,8 +41,19 @@ LEX_UNARY_OP = re.compile(r"[-~!*]")
 LABEL_CNT = 0
 
 
+def parse_reg(lex, name):
+    reg = None
+    if name.startswith("$"):
+        if lex.match("{"):
+            reg = lex.expect_re(LEX_IDENT, err="expected identifier")
+            lex.expect("}")
+    return reg
+
+
 def parse_var(lex):
-    return lex.expect_re(LEX_IDENT, err="expected identifier")
+    name = lex.expect_re(LEX_IDENT, err="expected identifier")
+    reg = parse_reg(lex, name)
+    return name, reg
 
 
 def parse_type_name(lex):
@@ -61,14 +72,22 @@ def parse_type(lex):
     return parse_type_mod(lex, typ)
 
 
+# Returns Arg object with .val and possibly .reg initialized.
 def parse_val(lex):
+    reg = None
     v = lex.match_re(LEX_IDENT)
     if v:
-        return v
-    v = lex.match_re(LEX_NUM)
-    if v:
-        return int(v, 0)
-    lex.error("expected value (var or num)")
+        reg = parse_reg(lex, v)
+    else:
+        v = lex.match_re(LEX_NUM)
+        if v:
+            v = int(v, 0)
+        else:
+            lex.error("expected value (var or num)")
+    a = Arg(v)
+    if reg is not None:
+        a.reg = reg
+    return a
 
 
 def parse_args(lex):
@@ -134,7 +153,7 @@ def parse(f):
             name = lex.expect_re(LEX_IDENT)
             if lex.match("("):
                 cfg = Func(name)
-                cfg.params = parse_args(lex)
+                cfg.params = [a.val for a in parse_args(lex)]
                 lex.expect("{")
                 label2bb = {}
                 start_new_bb = True
@@ -214,7 +233,7 @@ def parse(f):
                 assert isinstance(ptr_typ, PtrType)
                 ptr_typ = ptr_typ.el_type
                 lex.expect(")")
-            dest = parse_var(lex)
+            dest, dest_reg = parse_var(lex)
 
             if lex.match("="):
                 if ptr_typ is None and not dest.startswith("$"):
@@ -250,10 +269,11 @@ def parse(f):
                         if op == "(":
                             # Function call
                             args = parse_args(lex)
-                            insn, start_new_bb = make_call(dest, arg1, *args)
+                            insn, start_new_bb = make_call(dest, arg1.val, *args)
                         else:
                             arg2 = parse_val(lex)
                             insn = Insn(dest, op, arg1, arg2)
+                insn.reg = dest_reg
             elif lex.match("("):
                 # Function call
                 args = parse_args(lex)
