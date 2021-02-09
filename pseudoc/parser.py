@@ -28,7 +28,7 @@ from lexer import Lexer
 from .ir import Insn, BBlock, Func, Data, Module, PrimType, PtrType
 
 
-LEX_IDENT = re.compile(r"[@$]?[A-Za-z_][A-Za-z_0-9]*")
+LEX_IDENT = re.compile(r"[$][A-Za-z_0-9]+|[@]?[A-Za-z_][A-Za-z_0-9]*")
 LEX_NUM = re.compile(r"-?\d+")
 LEX_TYPE = re.compile(r"void|i1|i8|u8|i16|u16|i32|u32|i64|u64")
 # Simplified. To avoid enumerating specific operators supported, just say
