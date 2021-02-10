@@ -51,9 +51,10 @@ def parse_reg(lex, name):
 
 
 def parse_var(lex):
+    typ = parse_type(lex)
     name = lex.expect_re(LEX_IDENT, err="expected identifier")
     reg = parse_reg(lex, name)
-    return name, reg
+    return typ, name, reg
 
 
 def parse_type_name(lex):
@@ -235,7 +236,7 @@ def parse(f):
                 assert isinstance(ptr_typ, PtrType)
                 ptr_typ = ptr_typ.el_type
                 lex.expect(")")
-            dest, dest_reg = parse_var(lex)
+            dest_typ, dest, dest_reg = parse_var(lex)
 
             if lex.match("="):
                 if ptr_typ is None and not dest.startswith("$"):
@@ -276,6 +277,7 @@ def parse(f):
                             arg2 = parse_val(lex)
                             insn = Insn(dest, op, arg1, arg2)
                 insn.reg = dest_reg
+                insn.typ = dest_typ
             elif lex.match("("):
                 # Function call
                 args = parse_args(lex)
