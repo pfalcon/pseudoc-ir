@@ -104,6 +104,20 @@ def parse_args(lex):
     return res
 
 
+def parse_params(lex):
+    # "(" already matched
+    names = []
+    types = []
+    while not lex.check(")"):
+        typ, name, reg = parse_var(lex)
+        names.append(name)
+        types.append(typ)
+        if not lex.match(","):
+            break
+    lex.expect(")")
+    return names, types
+
+
 def parse_if_expr(lex):
     res = []
     lex.expect("(")
@@ -153,10 +167,13 @@ def parse(f):
         lex.init(l)
 
         if cfg is None:
+            res_type = parse_type(lex)
             name = lex.expect_re(LEX_IDENT)
+
             if lex.match("("):
                 cfg = Func(name)
-                cfg.params = [a.val for a in parse_args(lex)]
+                cfg.res_type = res_type
+                cfg.params, cfg.param_types = parse_params(lex)
                 lex.expect("{")
                 label2bb = {}
                 start_new_bb = True
