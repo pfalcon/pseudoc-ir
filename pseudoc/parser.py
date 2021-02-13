@@ -25,7 +25,7 @@
 import re
 
 from lexer import Lexer
-from .ir import InlineStr, Arg, Insn, BBlock, Func, Data, Module, PrimType, PtrType, ArrType, StructType
+from .ir import InlineStr, SpecFunc, Arg, Insn, BBlock, Func, Data, Module, PrimType, PtrType, ArrType, StructType
 
 
 LEX_IDENT = re.compile(r"[$][A-Za-z_0-9]+|[@]?[A-Za-z_][A-Za-z_0-9]*")
@@ -144,11 +144,22 @@ def parse_global_type_and_name(lex):
 
 
 # Returns Arg object with .val and possibly .reg initialized.
-def parse_val(lex):
+def parse_val(lex, spec_funcs=False):
     reg = None
     v = lex.match_re(LEX_IDENT)
     if v:
-        reg = parse_reg(lex, v)
+        if spec_funcs and v.startswith("@"):
+            if not v in ("@sizeof"):
+                lex.error("Only const-valued special functions may be used where value is expected")
+            lex.expect("(")
+            if v == "@sizeof":
+                args = [parse_type(lex)]
+                lex.expect(")")
+            else:
+                args = parse_args(lex)
+            return Arg(SpecFunc(v, *args))
+        else:
+            reg =  parse_reg(lex, v)
     else:
         v = lex.match_re(LEX_NUM)
         if v:
@@ -169,7 +180,7 @@ def parse_args(lex):
     # "(" already matched
     res = []
     while not lex.check(")"):
-        res.append(parse_val(lex))
+        res.append(parse_val(lex, spec_funcs=True))
         if not lex.match(","):
             break
     lex.expect(")")
