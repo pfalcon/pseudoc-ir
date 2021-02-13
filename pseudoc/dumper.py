@@ -150,8 +150,20 @@ def dump_bb(self, bb_ann=True, expl_goto=False, file=None, **opts):
 # Func functions
 
 
+def format_func_params(self, params, param_types):
+    if any(param_types):
+        pt = ", ".join(["%s %s" % p for p in zip(param_types, params)])
+    else:
+        pt = ", ".join(["%s" % p for p in params])
+    return pt
+
+
 def dump_func(self, file=None, **opts):
-    print("%s(%s) {" % (self.name, ", ".join(["%s" % p for p in self.params])), file=file)
+    t = ""
+    if self.res_type:
+        t = "%s " % self.res_type
+    param_str = format_func_params(self, self.params, self.param_types)
+    print("%s%s(%s) {" % (t, self.name, param_str), file=file)
     for bb in self.bblocks:
         bb.dump(file=file, is_ssa=self.is_ssa, **opts)
     print("}", file=file)
