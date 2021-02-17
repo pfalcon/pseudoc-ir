@@ -54,8 +54,11 @@ class Lexer:
             return res
         self.error("Expected %r" % s)
 
-    def expect_re(self, r, skipws=True):
+    def expect_re(self, r, skipws=True, err=None):
         res = self.match_re(r, skipws)
         if res:
             return res
-        self.error("Expected %r" % r)
+        if err is not None:
+            self.error(err)
+        else:
+            self.error("Expected %r" % r)
