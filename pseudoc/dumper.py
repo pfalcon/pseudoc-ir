@@ -148,7 +148,7 @@ def dump_bb(self, bb_ann=True, file=None, **opts):
 def dump_func(self, file=None, **opts):
     print("%s(%s) {" % (self.name, ", ".join(["%s" % p for p in self.params])), file=file)
     for bb in self.bblocks:
-        bb.dump(file=file, **opts)
+        bb.dump(file=file, is_ssa=self.is_ssa, **opts)
     print("}", file=file)
 
 
