@@ -86,6 +86,8 @@ class Func:
         self.params = ()
         self.param_types = ()
         self.bblocks = []
+        # Whether function is in SSA form.
+        self.is_ssa = False
 
     def calc_preds(self):
         for bb in self.bblocks:
