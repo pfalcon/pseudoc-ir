@@ -24,6 +24,8 @@
 
 import logging
 
+from . import dumper
+
 
 _log = logging.getLogger(__name__)
 
@@ -44,6 +46,14 @@ class Insn:
         self.dest = dest
         self.op = op
         self.args = [Arg(val) for val in args]
+
+    def __repr__(self):
+        return "<Insn @%s>" % self.dest_name()
+
+    dest_name = dumper.format_dest_name
+    format_insn = dumper.format_insn
+    # to_str allows to pass extra optional args.
+    __str__ = to_str = dumper.format_insn_ann
 
 
 class BBlock:
