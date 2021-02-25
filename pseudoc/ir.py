@@ -71,6 +71,12 @@ class BBlock:
         self.preds = []
         self.succs = []
 
+    def __repr__(self):
+        return "<BBlock %s>" % self.label
+
+    dump_insns = dumper.dump_bb_insns
+    dump = dumper.dump_bb
+
 
 class Func:
 
