@@ -147,6 +147,8 @@ class Data:
     def __repr__(self):
         return "<Data %s>" % self.name
 
+    dump = dumper.dump_data
+
 
 class Module:
 
