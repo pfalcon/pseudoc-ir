@@ -33,10 +33,11 @@ def is_infix_op(self):
 
 
 def format_dest_name(self, is_ssa=True):
+    n = self.dest
     if is_ssa:
-        return "%s_%s" % (self.dest, self.id)
-    else:
-        return self.dest
+        n += "_%s" % self.id
+    reg = "{%s}" % self.reg if self.reg else ""
+    return n + reg
 
 
 def format_args(args=None, sep=", "):
