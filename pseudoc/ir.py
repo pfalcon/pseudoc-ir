@@ -36,6 +36,11 @@ class Arg:
         self.val = val
         self.defi = None
 
+    def __repr__(self):
+        return "<Arg '%s'>" % self.__str__()
+
+    __str__ = dumper.format_arg
+
 
 class Insn:
 
