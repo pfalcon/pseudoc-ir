@@ -75,6 +75,13 @@ def parse_type(lex):
     return parse_type_mod(lex, typ)
 
 
+def parse_simple_type(lex):
+    if lex.match("void"):
+        lex.expect("*")
+        return "void*"
+    return parse_type_name(lex)
+
+
 # Returns Arg object with .val and possibly .reg initialized.
 def parse_val(lex):
     reg = None
