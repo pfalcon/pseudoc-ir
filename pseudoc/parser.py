@@ -36,6 +36,7 @@ LEX_TYPE = re.compile(r"void|i1|i8|u8|i16|u16|i32|u32|i64|u64")
 # w/o args).
 LEX_OP = re.compile(r"\(|[^ ]+")
 LEX_UNARY_OP = re.compile(r"[-~!*]")
+LEX_STR = re.compile(r'"([^\\]|\\.)*"')
 
 
 LABEL_CNT = 0
@@ -151,6 +152,51 @@ def make_call(dest, name, *args):
         return Insn(dest, "call", name, *args), True
 
 
+TYPE_SIZES = {
+    "i8": 1,
+    "u8": 1,
+    "i16": 2,
+    "u16": 2,
+    "i32": 4,
+    "u32": 4,
+    "i64": 8,
+    "u64": 8,
+    "void*": 4,
+}
+
+def parse_data(lex, name):
+    desc = []
+    size = 0
+    lex.expect("{")
+    while not lex.match("}"):
+        if lex.check('"'):
+            s = lex.match_re(LEX_STR)
+            b = s[1:-1].encode()
+
+            def unesc(m):
+                v = m.group(0)[1:]
+                if v.startswith(b"x"):
+                    v = bytes([int(v[1:], 16)])
+                else:
+                    v = {b"0": b"\0", b'"': b'"', b"n": b"\n"}[v]
+                return v
+            b = re.sub(rb"(\\x..|\\.)", unesc, b)
+
+            desc.append(("str", s, b))
+            size += len(b)
+        elif lex.match('('):
+            typ = parse_simple_type(lex)
+            lex.expect(")")
+            desc.append((typ, parse_val(lex)))
+            size += TYPE_SIZES[typ]
+        else:
+            lex.error("Unexpected syntax in data element")
+        lex.match(",")
+    data = Data(name, desc)
+    data.size = size
+    return data
+
+
 def parse(f):
     mod = Module()
     bb = None
@@ -187,7 +233,8 @@ def parse(f):
                 bb = None
                 prev_bb = None
             elif lex.match("="):
-                mod.contents.append(Data(name, lex.l))
+                data = parse_data(lex, name)
+                mod.contents.append(data)
             else:
                 lex.error("expected function or data definition")
             continue
