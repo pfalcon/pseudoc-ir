@@ -34,6 +34,7 @@ class Arg:
 
     def __init__(self, val):
         self.val = val
+        self.reg = None
         self.defi = None
 
     def __repr__(self):
@@ -51,6 +52,8 @@ class Insn:
         self.dest = dest
         self.op = op
         self.args = [Arg(val) for val in args]
+        # Assigned register
+        self.reg = None
 
     def __repr__(self):
         return "<Insn @%s>" % self.dest_name()
