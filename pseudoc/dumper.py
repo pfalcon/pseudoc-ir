@@ -195,7 +195,19 @@ def dump_struct(self, file=None, **opts):
 
 
 def dump_data(self, file=None, **opts):
-    print("%s = %s" % (self.name, self.desc), file=file)
+    t = "%s " % self.type if self.type else ""
+    print("%s%s = { " % (t, self.name), end="", file=file)
+    need_comma = False
+    for typ, *vals in self.desc:
+        val = vals[0]
+        if need_comma:
+            print(", ", end="", file=file)
+        if typ == "str":
+            print(val, end="", file=file)
+        else:
+            print("(%s)%s" % (typ, val), end="", file=file)
+        need_comma = True
+    print(" }", file=file)
 
 
 # Module functions
