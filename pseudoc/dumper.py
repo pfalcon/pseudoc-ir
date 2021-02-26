@@ -156,3 +156,10 @@ def dump_func(self, file=None, **opts):
 def simple_dump_func(self):
     for bb in self.bblocks:
         bb.simple_print()
+
+
+# Data functions
+
+
+def dump_data(self, file=None, **opts):
+    print("%s = %s" % (self.name, self.desc), file=file)
