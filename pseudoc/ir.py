@@ -87,6 +87,11 @@ class Func:
         self.param_types = ()
         self.bblocks = []
 
+    def __repr__(self):
+        return "<Func %s %d bb>" % (self.name, len(self.bblocks))
+
+    dump = dumper.dump_func
+
 
 class Type:
     pass
