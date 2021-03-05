@@ -129,13 +129,15 @@ def dump_bb_insns(self, file=None, **opts):
         print(s.to_str(bb=self, **opts), file=file)
 
 
-def dump_bb(self, bb_ann=True, file=None, **opts):
+def dump_bb(self, bb_ann=True, expl_goto=False, file=None, **opts):
     print("%s:" % self.label, file=file)
     if bb_ann:
         print("    # pred: %s" % (
             [b.label for b in self.preds],
         ), file=file)
     dump_bb_insns(self, file=file, **opts)
+    if expl_goto and len(self.succs) == 1:
+        print("    goto %s" % self.succs[0].label, file=file)
     if bb_ann:
         print("    # succ: %s" % (
             [b.label for b in self.succs],
