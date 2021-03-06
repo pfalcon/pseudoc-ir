@@ -155,3 +155,5 @@ class Module:
 
     def add(self, item):
         self.contents.append(item)
+
+    dump = dumper.dump_module
