@@ -136,6 +136,8 @@ class StructType(Type):
     def __str__(self):
         return "struct %s" % self.name
 
+    dump = dumper.dump_struct
+
 
 class Data:
 
