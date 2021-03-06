@@ -163,3 +163,15 @@ def simple_dump_func(self):
 
 def dump_data(self, file=None, **opts):
     print("%s = %s" % (self.name, self.desc), file=file)
+
+
+# Module functions
+
+
+def dump_module(self, file=None, **opts):
+    need_empty_line = False
+    for item in self.contents:
+        if need_empty_line:
+            print(file=file)
+        item.dump(file=file, **opts)
+        need_empty_line = True
