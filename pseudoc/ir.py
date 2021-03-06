@@ -67,6 +67,50 @@ class Func:
         self.bblocks = []
 
 
+class Type:
+    pass
+
+
+class PrimType(Type):
+    def __init__(self, typ):
+        self.typ = typ
+
+    def __str__(self):
+        return self.typ
+
+
+class PtrType(Type):
+    def __init__(self, el_type):
+        self.el_type = el_type
+
+    def __str__(self):
+        return "%s*" % self.el_type
+
+
+class ArrType(Type):
+    def __init__(self, el_type, num):
+        self.el_type = el_type
+        self.num = num
+
+    def __str__(self):
+        idxs = ""
+        t = self
+        # "Reverse" order of recursive array types to get C-like notation.
+        while isinstance(t, ArrType):
+            idxs += "[%d]" % t.num
+            t = t.el_type
+        return "%s%s" % (t, idxs)
+
+
+class StructType(Type):
+    def __init__(self, name, fields):
+        self.name = name
+        self.fields = fields  # (name, type)
+
+    def __str__(self):
+        return "struct %s" % self.name
+
+
 class Data:
 
     def __init__(self, name, desc, type=None):
