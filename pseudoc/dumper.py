@@ -158,6 +158,22 @@ def simple_dump_func(self):
         bb.simple_print()
 
 
+# Struct functions
+
+
+def dump_struct(self, file=None, **opts):
+    print("struct %s { " % self.name, end="", file=file)
+    need_comma = False
+    for name, typ in self.fields:
+        if need_comma:
+            print(", ", end="", file=file)
+        print("%s" % typ, end="", file=file)
+        if name:
+            print(" %s" % name, end="", file=file)
+        need_comma = True
+    print(" }", file=file)
+
+
 # Data functions
 
 
