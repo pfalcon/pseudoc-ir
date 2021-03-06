@@ -25,10 +25,11 @@
 import re
 
 from lexer import Lexer
-from .ir import Arg, Insn, BBlock, Func, Data, Module, PrimType, PtrType
+from .ir import Arg, Insn, BBlock, Func, Data, Module, PrimType, PtrType, StructType
 
 
 LEX_IDENT = re.compile(r"[$][A-Za-z_0-9]+|[@]?[A-Za-z_][A-Za-z_0-9]*")
+LEX_SIMPLE_IDENT = re.compile(r"[A-Za-z_][A-Za-z_0-9]*")
 LEX_NUM = re.compile(r"-?\d+")
 LEX_TYPE = re.compile(r"void|i1|i8|u8|i16|u16|i32|u32|i64|u64")
 # Simplified. To avoid enumerating specific operators supported, just say
@@ -40,6 +41,7 @@ LEX_STR = re.compile(r'"([^\\]|\\.)*"')
 
 
 LABEL_CNT = 0
+STRUCT_TYPE_MAP = {}
 
 
 def parse_reg(lex, name):
@@ -69,10 +71,16 @@ def parse_type_mod(lex, typ):
 
 
 def parse_type(lex):
-    typ = parse_type_name(lex)
-    if typ is None:
-        return None
-    typ = PrimType(typ)
+    if lex.match("struct"):
+        name = lex.expect_re(LEX_SIMPLE_IDENT, "expected structure identifier")
+        if name not in STRUCT_TYPE_MAP:
+            lex.error("unknown structure type: %s" % name)
+        typ = STRUCT_TYPE_MAP[name]
+    else:
+        typ = parse_type_name(lex)
+        if typ is None:
+            return None
+        typ = PrimType(typ)
     return parse_type_mod(lex, typ)
 
 
@@ -198,6 +206,7 @@ def parse_data(lex, name):
 
 
 def parse(f):
+    STRUCT_TYPE_MAP.clear()
     mod = Module()
     bb = None
     prev_bb = None
@@ -220,6 +229,22 @@ def parse(f):
         lex.init(l)
 
         if cfg is None:
+            if lex.match("struct"):
+                # Structure declaration
+                name = lex.expect_re(LEX_SIMPLE_IDENT)
+                struct = StructType(name, None)
+                STRUCT_TYPE_MAP[name] = struct
+                fields = []
+                lex.expect("{")
+                while not lex.match("}"):
+                    typ = parse_type(lex)
+                    fldname = lex.match_re(LEX_SIMPLE_IDENT)
+                    fields.append((fldname, typ))
+                    lex.match(",")
+                struct.fields = fields
+                mod.add(struct)
+                continue
+
             res_type = parse_type(lex)
             name = lex.expect_re(LEX_IDENT)
 
