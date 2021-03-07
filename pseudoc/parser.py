@@ -25,7 +25,7 @@
 import re
 
 from lexer import Lexer
-from .ir import Arg, Insn, BBlock, Func, Data, Module, PrimType, PtrType, StructType
+from .ir import Arg, Insn, BBlock, Func, Data, Module, PrimType, PtrType, ArrType, StructType
 
 
 LEX_IDENT = re.compile(r"[$][A-Za-z_0-9]+|[@]?[A-Za-z_][A-Za-z_0-9]*")
@@ -65,8 +65,20 @@ def parse_type_name(lex):
 
 
 def parse_type_mod(lex, typ):
-    while lex.match("*"):
-        typ = PtrType(typ)
+    while True:
+        if lex.match("*"):
+            typ = PtrType(typ)
+        elif lex.check("["):
+            dims = []
+            while lex.match("["):
+                dim = parse_val(lex).val
+                assert isinstance(dim, int)
+                dims.append(dim)
+                lex.expect("]")
+            for dim in reversed(dims):
+                typ = ArrType(typ, dim)
+        else:
+            break
     return typ
 
 
