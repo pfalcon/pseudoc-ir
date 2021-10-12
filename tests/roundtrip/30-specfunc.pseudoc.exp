@@ -1,0 +1,7 @@
+func() {
+label:
+    $a = 1
+    @use($a)
+    @use($a)
+    $b = @rol($a, 2)
+}
