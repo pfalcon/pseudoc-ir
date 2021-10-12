@@ -1,0 +1,13 @@
+fun() {
+label:
+    fun()
+    goto _l0
+_l0:
+    fun1(1, 2)
+    goto _l1
+_l1:
+    fun2(1, sym, $var)
+    goto _l2
+_l2:
+    $var(1, 2)
+}

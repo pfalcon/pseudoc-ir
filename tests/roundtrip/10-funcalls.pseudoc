@@ -1,0 +1,7 @@
+fun() {
+label:
+    fun()
+    fun1(1, 2)
+    fun2(1, sym, $var)
+    $var(1, 2)
+}
