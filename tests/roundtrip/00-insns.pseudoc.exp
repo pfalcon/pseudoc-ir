@@ -1,0 +1,19 @@
+insn_syntax() {
+label:
+    $a = 1
+    $a1 = 1 + 2
+    $a2 = $a1 + 3
+    $a3 = 4 + $a2
+    if ($a == 3) goto l2 else l1
+l1:
+    $b = 1
+    goto l3
+l2:
+    $b = 2
+    goto l3
+l3:
+    if ($a == 4) goto l1 else l2
+l4:
+    return
+    return $a
+}
