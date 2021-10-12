@@ -1,0 +1,6 @@
+func() {
+label:
+    @nop
+    $a = 1
+    @nop
+}
