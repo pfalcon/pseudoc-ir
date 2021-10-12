@@ -1,0 +1,9 @@
+label_auto_insert() {
+    $b = 10
+    if ($b == 11) goto l1
+    $c = 20
+    goto l1
+    $unreachable = 5
+l1:
+    $d = 30
+}
