@@ -119,7 +119,9 @@ def format_arg(self):
     if self.defi is not None:
         return self.defi.dest_name()
     else:
-        return str(self.val)
+        n = str(self.val)
+        reg = "{%s}" % self.reg if self.reg else ""
+        return n + reg
 
 
 # BBlock functions
