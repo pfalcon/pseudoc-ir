@@ -57,7 +57,7 @@ def parse_var(lex):
 
 
 def parse_type_name(lex):
-    return lex.expect_re(LEX_TYPE)
+    return lex.match_re(LEX_TYPE)
 
 
 def parse_type_mod(lex, typ):
@@ -68,6 +68,8 @@ def parse_type_mod(lex, typ):
 
 def parse_type(lex):
     typ = parse_type_name(lex)
+    if typ is None:
+        return None
     typ = PrimType(typ)
     return parse_type_mod(lex, typ)
 
