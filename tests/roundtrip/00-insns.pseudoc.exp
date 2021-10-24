@@ -4,6 +4,7 @@ label:
     $a1 = 1 + 2
     $a2 = $a1 + 3
     $a3 = 4 + $a2
+    $0 = $1 + $2
     if ($a == 3) goto l2 else l1
 l1:
     $b = 1
