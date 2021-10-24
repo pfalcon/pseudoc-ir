@@ -1,0 +1,10 @@
+foo() {
+label:
+    return
+}
+
+foo($a, $b) {
+label:
+    $c = $a + $b
+    return $c
+}
