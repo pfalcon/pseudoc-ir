@@ -1,0 +1,5 @@
+i32 add(i32 $a, i32 $b) {
+label:
+    i32 $c = $a + $b
+    return $c
+}
