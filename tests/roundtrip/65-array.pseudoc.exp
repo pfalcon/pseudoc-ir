@@ -1,0 +1,6 @@
+struct S { i32[8] arr, void* p }
+
+fun() {
+label:
+    i8[2][3]* $p = 123
+}
