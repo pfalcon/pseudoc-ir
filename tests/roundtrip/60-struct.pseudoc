@@ -1,0 +1,8 @@
+struct Foo { i8 a, void* p }
+
+struct List { struct List* next, u32 payload }
+
+fun() {
+label:
+    struct Foo *$p = 123
+}
