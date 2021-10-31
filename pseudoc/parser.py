@@ -25,6 +25,7 @@
 import re
 
 from lexer import Lexer
+from . import config
 from .ir import InlineStr, SpecFunc, Arg, Insn, BBlock, Func, Data, Module, PrimType, PtrType, ArrType, StructType
 
 
@@ -224,7 +225,7 @@ def make_call(dest, name, *args):
         # Special name
         return Insn(dest, name, *args), False
     else:
-        return Insn(dest, "call", name, *args), True
+        return Insn(dest, "call", name, *args), config.SPLIT_BB_AFTER_CALL
 
 
 TYPE_SIZES = {
