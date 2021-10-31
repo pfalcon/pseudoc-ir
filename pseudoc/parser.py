@@ -85,9 +85,9 @@ def parse_type_mod(lex, typ):
 def parse_type(lex):
     if lex.match("struct"):
         name = lex.expect_re(LEX_SIMPLE_IDENT, "expected structure identifier")
-        if name not in STRUCT_TYPE_MAP:
-            lex.error("unknown structure type: %s" % name)
-        typ = STRUCT_TYPE_MAP[name]
+        typ = STRUCT_TYPE_MAP.get(name)
+        if typ is None:
+            typ = STRUCT_TYPE_MAP[name] = StructType(name, None)
     else:
         typ = parse_type_name(lex)
         if typ is None:
@@ -244,8 +244,13 @@ def parse(f):
             if lex.match("struct"):
                 # Structure declaration
                 name = lex.expect_re(LEX_SIMPLE_IDENT)
-                struct = StructType(name, None)
-                STRUCT_TYPE_MAP[name] = struct
+                struct = STRUCT_TYPE_MAP.get(name)
+                if struct:
+                    if struct.fields is not None:
+                        lex.error("duplicate struct definition: %s" % name)
+                else:
+                    struct = StructType(name, None)
+                    STRUCT_TYPE_MAP[name] = struct
                 fields = []
                 lex.expect("{")
                 while not lex.match("}"):
