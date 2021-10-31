@@ -42,7 +42,11 @@ argp = argparse.ArgumentParser(description="Parse PseudoC program and apply tran
 argp.add_argument("file")
 argp.add_argument("-o", "--out", help="Output to file")
 argp.add_argument("-x", "--xforms", default=[], action="append", help="transformation(s) to apply")
+argp.add_argument("--no-split-after-call", action="store_true", help="don't split basic blocks after call insn")
 args = argp.parse_args()
+
+if args.no_split_after_call:
+    config.SPLIT_BB_AFTER_CALL = False
 
 passes_list = []
 
