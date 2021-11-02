@@ -1,0 +1,7 @@
+struct S1 { struct S2, i32 }
+
+struct S2 { i8 }
+
+struct R1 { struct R2* another }
+
+struct R2 { struct R1* another }
