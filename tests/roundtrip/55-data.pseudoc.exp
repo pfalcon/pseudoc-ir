@@ -3,3 +3,7 @@ data1 = { "foo" }
 data2 = { "foo", "b\xaar\0" }
 
 data3 = { (u8)1, (i8)-1, (i64)-12345, "str" }
+
+i32 data4 = { (i32)1 }
+
+void**** data4 = { (void*)0 }
