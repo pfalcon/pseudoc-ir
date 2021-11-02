@@ -30,6 +30,7 @@ from .ir import Arg, Insn, BBlock, Func, Data, Module, PrimType, PtrType, ArrTyp
 
 LEX_IDENT = re.compile(r"[$][A-Za-z_0-9]+|[@]?[A-Za-z_][A-Za-z_0-9]*")
 LEX_SIMPLE_IDENT = re.compile(r"[A-Za-z_][A-Za-z_0-9]*")
+LEX_QUOTED_IDENT = re.compile(r"`.+?`")
 LEX_NUM = re.compile(r"-?\d+")
 LEX_TYPE = re.compile(r"void|i1|i8|u8|i16|u16|i32|u32|i64|u64")
 # Simplified. To avoid enumerating specific operators supported, just say
@@ -38,6 +39,8 @@ LEX_TYPE = re.compile(r"void|i1|i8|u8|i16|u16|i32|u32|i64|u64")
 LEX_OP = re.compile(r"\(|[^ ]+")
 LEX_UNARY_OP = re.compile(r"[-~!*]")
 LEX_STR = re.compile(r'"([^\\]|\\.)*"')
+
+TYPE_NAMES = {"void", "i1", "i8", "u8", "i16", "u16", "i32", "u32", "i64", "u64"}
 
 
 LABEL_CNT = 0
@@ -101,6 +104,43 @@ def parse_simple_type(lex):
         lex.expect("*")
         return "void*"
     return parse_type_name(lex)
+
+
+def parse_global_type_and_name(lex):
+    typ = None
+    name = None
+    parsed = lex.match_re(LEX_QUOTED_IDENT)
+    if parsed:
+        # If we matched a quoted id at the beginning, we know there's no type.
+        name = parsed[1:-1]
+    else:
+        parsed = lex.expect_re(LEX_SIMPLE_IDENT, "expected a simple identifier")
+        if parsed == "struct":
+            parsed = lex.expect_re(LEX_SIMPLE_IDENT, "expected structure identifier")
+            typ = STRUCT_TYPE_MAP.get(parsed)
+            if typ is None:
+                typ = STRUCT_TYPE_MAP[parsed] = StructType(parsed, None)
+        elif parsed in TYPE_NAMES:
+            typ = PrimType(parsed)
+        else:
+            # Otherwise what we parsed is a name.
+            name = parsed
+
+        if typ:
+            typ = parse_type_mod(lex, typ)
+            name = lex.match_re(LEX_SIMPLE_IDENT)
+            if not name:
+                name = lex.match_re(LEX_QUOTED_IDENT)
+            if not name:
+                # If that was a bare structure name followed by {, i.e. a
+                # structure type definition, it's ok to not have a name,
+                # otherwise report error.
+                if isinstance(typ, StructType) and lex.check("{"):
+                    pass
+                else:
+                    lex.error("identifer expected after type")
+
+    return (typ, name)
 
 
 # Returns Arg object with .val and possibly .reg initialized.
@@ -241,33 +281,24 @@ def parse(f):
         lex.init(l)
 
         if cfg is None:
-            if lex.match("struct"):
+            typ, name = parse_global_type_and_name(lex)
+
+            if isinstance(typ, StructType) and lex.match("{"):
                 # Structure declaration
-                name = lex.expect_re(LEX_SIMPLE_IDENT)
-                struct = STRUCT_TYPE_MAP.get(name)
-                if struct:
-                    if struct.fields is not None:
-                        lex.error("duplicate struct definition: %s" % name)
-                else:
-                    struct = StructType(name, None)
-                    STRUCT_TYPE_MAP[name] = struct
+                if typ.fields is not None:
+                    lex.error("duplicate struct definition: %s" % typ.name)
                 fields = []
-                lex.expect("{")
                 while not lex.match("}"):
-                    typ = parse_type(lex)
+                    typ_fld = parse_type(lex)
                     fldname = lex.match_re(LEX_SIMPLE_IDENT)
-                    fields.append((fldname, typ))
+                    fields.append((fldname, typ_fld))
                     lex.match(",")
-                struct.fields = fields
-                mod.add(struct)
+                typ.fields = fields
+                mod.add(typ)
                 continue
-
-            res_type = parse_type(lex)
-            name = lex.expect_re(LEX_IDENT)
-
-            if lex.match("("):
+            elif lex.match("("):
                 cfg = Func(name)
-                cfg.res_type = res_type
+                cfg.res_type = typ
                 cfg.params, cfg.param_types = parse_params(lex)
                 lex.expect("{")
                 label2bb = {}
@@ -276,9 +307,10 @@ def parse(f):
                 prev_bb = None
             elif lex.match("="):
                 data = parse_data(lex, name)
+                data.type = typ
                 mod.contents.append(data)
             else:
-                lex.error("expected function or data definition")
+                lex.error("expected function, data, or structure definition")
             continue
 
         if lex.match("}"):
