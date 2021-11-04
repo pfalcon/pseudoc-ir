@@ -1,0 +1,7 @@
+struct S { i32 }
+
+fun() {
+label:
+    $a = (i32)$b
+    $c = (struct S*)$d
+}
