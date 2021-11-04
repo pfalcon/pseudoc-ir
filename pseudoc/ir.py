@@ -52,6 +52,20 @@ class Arg:
     __str__ = dumper.format_arg
 
 
+class SpecFunc:
+    """A special function which may appear where a value appears. Normally,
+    these would be used for constexpr style functions (which can be lowered
+    into a constant), but actual interpretation/processing depends on passes
+    applied. Internal layout mirrors subset of Insn."""
+
+    def __init__(self, op, *args):
+        self.op = op
+        self.args = [val if isinstance(val, Arg) else Arg(val) for val in args]
+
+    def __str__(self):
+        return "%s(%s)" % (self.op, dumper.format_args(self.args))
+
+
 class Insn:
 
     def __init__(self, dest, op, *args, type=None):
