@@ -30,6 +30,15 @@ from . import dumper
 _log = logging.getLogger(__name__)
 
 
+class InlineStr:
+
+    def __init__(self, s):
+        self.s = s
+
+    def __str__(self):
+        return '"%s"' % self.s
+
+
 class Arg:
 
     def __init__(self, val):
