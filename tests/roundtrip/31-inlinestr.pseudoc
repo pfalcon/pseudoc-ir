@@ -1,0 +1,4 @@
+fun() {
+label:
+    printf("Hello\n\0")
+}
