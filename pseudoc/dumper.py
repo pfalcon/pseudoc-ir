@@ -76,6 +76,8 @@ def format_insn(self, bb=None, is_ssa=True):
         else:
             assert isinstance(self.args[1].val, ir.Type), repr(self.args[1])
             res += "*(%s*)%s = %s" % (self.args[1].val, self.args[0], self.args[2])
+    elif self.op == "@cast":
+        res += "(%s)%s" % (self.args[0], self.args[1])
     elif self.op.startswith("@"):
         res += "%s(%s)" % (self.op, format_args(self.args))
     elif self.op == "call":
