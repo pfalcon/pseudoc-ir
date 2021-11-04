@@ -37,7 +37,7 @@ LEX_TYPE = re.compile(r"void|i1|i8|u8|i16|u16|i32|u32|i64|u64")
 # "anything non-space, except handle opening parens specially (for calls
 # w/o args).
 LEX_OP = re.compile(r"\(|[^ ]+")
-LEX_UNARY_OP = re.compile(r"[-~!*]")
+LEX_UNARY_OP = re.compile(r"[-~!*(]")
 LEX_STR = re.compile(r'"([^\\]|\\.)*"')
 
 TYPE_NAMES = {"void", "i1", "i8", "u8", "i16", "u16", "i32", "u32", "i64", "u64"}
@@ -406,17 +406,23 @@ def parse(f):
                 if unary_op:
                     # Unary op
                     typ = None
+                    args = []
                     if unary_op == "*":
+                        op = "@load"
                         if lex.match("("):
                             typ = parse_type(lex)
                             assert isinstance(typ, PtrType)
                             typ = typ.el_type
                             lex.expect(")")
-                    arg1 = parse_val(lex)
+                    elif unary_op == "(":
+                        op = "@cast"
+                        typ = parse_type(lex)
+                        lex.expect(")")
+                        args.append(typ)
+                    args.append(parse_val(lex))
                     if unary_op == "*":
-                        insn = Insn(dest, "@load", arg1, typ)
-                    else:
-                        insn = Insn(dest, op, arg1)
+                        args.append(typ)
+                    insn = Insn(dest, op, *args)
                 else:
                     arg1 = parse_val(lex)
                     if lex.eol():
