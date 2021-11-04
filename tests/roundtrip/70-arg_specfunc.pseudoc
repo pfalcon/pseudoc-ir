@@ -1,0 +1,4 @@
+fun() {
+label:
+    $p = @alloca(@sizeof(i32))
+}
