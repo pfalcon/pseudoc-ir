@@ -25,7 +25,7 @@
 import re
 
 from lexer import Lexer
-from .ir import Arg, Insn, BBlock, Func, Data, Module, PrimType, PtrType, ArrType, StructType
+from .ir import InlineStr, Arg, Insn, BBlock, Func, Data, Module, PrimType, PtrType, ArrType, StructType
 
 
 LEX_IDENT = re.compile(r"[$][A-Za-z_0-9]+|[@]?[A-Za-z_][A-Za-z_0-9]*")
@@ -154,7 +154,11 @@ def parse_val(lex):
         if v:
             v = int(v, 0)
         else:
-            lex.error("expected value (var or num)")
+            v = lex.match_re(LEX_STR)
+            if v:
+                v = InlineStr(v[1:-1])
+            else:
+                lex.error("expected value (var or const)")
     a = Arg(v)
     if reg is not None:
         a.reg = reg
