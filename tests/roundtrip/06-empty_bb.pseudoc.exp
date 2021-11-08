@@ -1,0 +1,8 @@
+fun() {
+l0:
+    goto l2
+l1:
+    goto l2
+l2:
+    goto l1
+}
